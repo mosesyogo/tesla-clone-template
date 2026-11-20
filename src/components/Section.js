@@ -47,8 +47,10 @@ export default Section
 
 const Wrap = styled.div`
     z-index: 10;
-    width: 100vw;
+    width: 100%;              /* was 100vw, which includes the scrollbar width */
     height: 100vh;
+    height: 100svh;           /* fixes the mobile browser address-bar jump */
+    overflow: hidden;         /* stops any child from widening the page */
     background-image: url(${props => props.bgimg});
     background-position: center;
     background-repeat: no-repeat;
@@ -60,10 +62,13 @@ const ItemText = styled.div`
     padding-top: 15vh;
     width: 100%;
     text-align: center;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
 `
 
 const ItemTextHeader = styled.h1`
-    font-size: 40px;
+    font-size: clamp(28px, 6vw, 40px);
     font-weight: 600;
     line-height: 1;
     margin-bottom: 5px;
@@ -71,7 +76,7 @@ const ItemTextHeader = styled.h1`
 `
 
 const ItemTextSubHeader = styled.h4`
-    font-size: 20px;
+    font-size: clamp(15px, 3vw, 20px);
     font-weight: 400;
     margin-bottom: 20px;
 `
@@ -80,6 +85,11 @@ const ButtonGroup = styled.div`
     display: flex;
     justify-content: center;
     gap: 10px;
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        align-items: center;
+    }
 `
 
 const BottomButtonGroup = styled.div`
@@ -91,12 +101,18 @@ const BottomButtonGroup = styled.div`
     justify-content: center;
     align-items: center;
     gap: 10px;
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        bottom: 12vh;
+    }
 `
 
 const LeftButton = styled.div`
     background-color: rgba(23, 26, 32, 0.8);
     height: 40px;
     width: 256px;
+    max-width: 85vw;          /* never wider than the screen */
     flex-shrink: 0;
     color: white;
     display: flex;

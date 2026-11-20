@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from "styled-components"
 import MenuIcon from '@mui/icons-material/Menu'
 import CloseIcon from '@mui/icons-material/Close'
@@ -9,10 +9,20 @@ function Header() {
     const [burgerStatus, setBurgerStatus] = useState(false)
     const cars = useSelector(selectCars)
 
+    // Close the menu with the Escape key
+    useEffect(() => {
+        if (!burgerStatus) return undefined
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') setBurgerStatus(false)
+        }
+        document.addEventListener('keydown', onKeyDown)
+        return () => document.removeEventListener('keydown', onKeyDown)
+    }, [burgerStatus])
+
     return (
         <Container>
             <a href="/">
-                <img src="/images/logo.svg" alt="" />
+                <img src="/images/logo.svg" alt="Tesla" />
             </a>
 
             <Menu>
@@ -23,16 +33,29 @@ function Header() {
             </Menu>
 
             <RightMenu>
-                <a href="#">Shop</a>
-                <a href="#">Tesla Account</a>
-                <CustomMenu onClick={() => setBurgerStatus(true)}>
+                <a className="top-link" href="#">Shop</a>
+                <a className="top-link" href="#">Tesla Account</a>
+                <CustomMenu
+                    type="button"
+                    aria-label="Open menu"
+                    aria-expanded={burgerStatus}
+                    onClick={() => setBurgerStatus(true)}
+                >
                     <MenuIcon />
                 </CustomMenu>
             </RightMenu>
 
-            <BurgerNav show={burgerStatus}>
+            <Overlay $show={burgerStatus} onClick={() => setBurgerStatus(false)} />
+
+            <BurgerNav $show={burgerStatus} aria-hidden={!burgerStatus}>
                 <CloseWrapper>
-                    <CustomClose onClick={() => setBurgerStatus(false)} />
+                    <CloseButton
+                        type="button"
+                        aria-label="Close menu"
+                        onClick={() => setBurgerStatus(false)}
+                    >
+                        <CloseIcon />
+                    </CloseButton>
                 </CloseWrapper>
 
                 {cars && cars.map((car) => (
@@ -49,6 +72,10 @@ function Header() {
                 <li><a href="#">Test Drive</a></li>
                 <li><a href="#">Find Us</a></li>
                 <li><a href="#">Careers</a></li>
+
+                {/* These two are hidden in the top bar on phones, so they live here */}
+                <li className="mobile-only"><a href="#">Shop</a></li>
+                <li className="mobile-only"><a href="#">Tesla Account</a></li>
             </BurgerNav>
         </Container>
     )
@@ -70,8 +97,25 @@ const Container = styled.div`
     box-sizing: border-box;
 
     img {
+        display: block;
         width: 130px;
         margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+        padding: 0 12px;
+
+        img {
+            width: 100px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        padding: 0 8px;
+
+        img {
+            width: 88px;
+        }
     }
 `
 
@@ -91,7 +135,7 @@ const Menu = styled.div`
         white-space: nowrap;
     }
 
-    @media(max-width: 768px) {
+    @media (max-width: 768px) {
         display: none;
     }
 `
@@ -109,20 +153,54 @@ const RightMenu = styled.div`
         white-space: nowrap;
         text-transform: uppercase;
     }
-`
 
-const CustomMenu = styled.div`
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    margin-left: 15px;
-
-    svg {
-        width: 20px;
+    /* On phones only the menu button stays in the bar */
+    @media (max-width: 768px) {
+        .top-link {
+            display: none;
+        }
     }
 `
 
-const CustomClose = styled(CloseIcon)`
+const CustomMenu = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px; /* comfortable thumb target */
+    margin-left: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: black;
+    cursor: pointer;
+
+    svg {
+        width: 24px;
+        height: 24px;
+    }
+`
+
+const Overlay = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 19;
+    opacity: ${props => props.$show ? 1 : 0};
+    visibility: ${props => props.$show ? 'visible' : 'hidden'};
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+`
+
+const CloseButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: black;
     cursor: pointer;
 `
 
@@ -136,7 +214,9 @@ const BurgerNav = styled.ul`
     top: 0;
     right: 0;
     height: 100vh;
+    height: 100dvh; /* fixes the mobile browser address-bar jump */
     width: 300px;
+    max-width: 85vw; /* never wider than the phone screen */
     background-color: white;
     box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
     list-style: none;
@@ -144,8 +224,9 @@ const BurgerNav = styled.ul`
     margin: 0;
     box-sizing: border-box;
     z-index: 20;
-    transform: ${props => props.show ? 'translateX(0)' : 'translateX(100%)'};
-    transition: transform 0.3s ease-in-out;
+    transform: ${props => props.$show ? 'translateX(0)' : 'translateX(100%)'};
+    visibility: ${props => props.$show ? 'visible' : 'hidden'};
+    transition: transform 0.3s ease-in-out, visibility 0.3s ease-in-out;
     overflow-y: auto;
 
     li {
@@ -163,6 +244,17 @@ const BurgerNav = styled.ul`
 
         &:hover {
             opacity: 0.6;
+        }
+    }
+
+    /* Shop and Account only appear here on phones */
+    .mobile-only {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-only {
+            display: block;
         }
     }
 `
